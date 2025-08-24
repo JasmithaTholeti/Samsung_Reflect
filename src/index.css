@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Samsung Reflect Design System - Light Theme */
+    --background: 0 0% 99%;
+    --foreground: 240 10% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 15%;
+
+    /* Orange/Amber Primary Colors */
+    --primary: 25 95% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 28 100% 70%;
+    --primary-soft: 25 100% 95%;
+
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 15%;
+
+    --muted: 240 4% 95%;
+    --muted-foreground: 240 5% 50%;
+
+    --accent: 28 100% 88%;
+    --accent-foreground: 240 10% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 25 95% 55%;
+
+    /* Samsung Reflect Specific */
+    --canvas-bg: 0 0% 98%;
+    --element-shadow: 0 0% 0% / 0.1;
+    --element-border: 240 6% 85%;
+    --mood-happy: 45 100% 60%;
+    --mood-calm: 200 100% 60%;
+    --mood-excited: 300 100% 60%;
+    --mood-stressed: 0 100% 60%;
+    --mood-tired: 240 20% 60%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-canvas: linear-gradient(180deg, hsl(var(--canvas-bg)), hsl(var(--background)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(var(--muted)));
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -2px hsl(var(--element-shadow));
+    --shadow-drag: 0 10px 35px -5px hsl(var(--element-shadow));
+    --shadow-glow: 0 0 20px hsl(var(--primary-glow) / 0.3);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Samsung Reflect Dark Theme */
+    --background: 20 14% 8%;
+    --foreground: 25 100% 95%;
+
+    --card: 25 10% 12%;
+    --card-foreground: 25 100% 95%;
+
+    --popover: 25 10% 12%;
+    --popover-foreground: 25 100% 95%;
+
+    /* Amber Primary for Dark */
+    --primary: 40 100% 70%;
+    --primary-foreground: 20 14% 8%;
+    --primary-glow: 45 100% 60%;
+    --primary-soft: 40 50% 15%;
+
+    --secondary: 25 8% 18%;
+    --secondary-foreground: 25 100% 95%;
+
+    --muted: 25 8% 15%;
+    --muted-foreground: 25 20% 65%;
+
+    --accent: 40 50% 20%;
+    --accent-foreground: 25 100% 95%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 25 100% 95%;
+
+    --border: 25 8% 22%;
+    --input: 25 8% 22%;
+    --ring: 40 100% 70%;
+
+    /* Dark Theme Specific */
+    --canvas-bg: 20 12% 10%;
+    --element-shadow: 0 0% 0% / 0.3;
+    --element-border: 25 8% 25%;
+
+    /* Keep mood colors bright in dark theme */
+    --mood-happy: 45 100% 65%;
+    --mood-calm: 200 80% 65%;
+    --mood-excited: 300 80% 70%;
+    --mood-stressed: 0 80% 65%;
+    --mood-tired: 240 40% 65%;
+
+    /* Dark gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-canvas: linear-gradient(180deg, hsl(var(--canvas-bg)), hsl(var(--background)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(var(--muted)));
+
+    /* Enhanced dark shadows */
+    --shadow-soft: 0 8px 25px -5px hsl(var(--element-shadow));
+    --shadow-drag: 0 15px 40px -8px hsl(var(--element-shadow));
+    --shadow-glow: 0 0 25px hsl(var(--primary-glow) / 0.4);
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer components {
+/* Canvas draggable elements */
+  .draggable-element {
+    @apply cursor-move select-none transition-all duration-200;
+    transform-style: preserve-3d;
+    touch-action: none; /* Better mobile interaction */
+  }
+  
+  .dragging {
+    @apply z-50;
+    transform: translate3d(var(--x, 0), var(--y, 0), 0) scale(1.02);
+    box-shadow: var(--shadow-drag);
+  }
+
+  /* Journal canvas */
+  .journal-canvas {
+    background: var(--gradient-canvas);
+    min-height: 100vh;
+  }
+
+  /* Mood indicators */
+  .mood-happy { @apply bg-[hsl(var(--mood-happy))]; }
+  .mood-calm { @apply bg-[hsl(var(--mood-calm))]; }
+  .mood-excited { @apply bg-[hsl(var(--mood-excited))]; }
+  .mood-stressed { @apply bg-[hsl(var(--mood-stressed))]; }
+  .mood-tired { @apply bg-[hsl(var(--mood-tired))]; }
+
+  /* Glass morphism effects */
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  /* Safe area padding for mobile devices */
+  .safe-area-padding-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Responsive text sizes */
+  @media (max-width: 768px) {
+    .draggable-element {
+      min-width: 200px;
+      min-height: 80px;
+    }
+  }
+}
+
+@layer utilities {
+  /* Custom keyframes */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary-glow) / 0.4); }
+    50% { box-shadow: 0 0 0 10px hsl(var(--primary-glow) / 0); }
+  }
+}
