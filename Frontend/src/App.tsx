@@ -21,6 +21,9 @@ const App = () => (
         <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/journal" element={<Index />} />
+            <Route path="/journal/:id" element={<Index />} />
+             {/* <Route path="/journal/:id" element={<JournalEditor />} /> */}
             <Route path="/memories" element={<Memories />} />
             <Route path="/insights" element={<Insights />} />
             <Route path="/settings" element={<Settings />} />
