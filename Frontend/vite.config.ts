@@ -6,7 +6,13 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    allowedHosts: true
+    allowedHosts: true,
+    proxy: {
+      '/uploads': {
+        target: 'http://localhost:4000',
+        changeOrigin: true
+      }
+    }
   },
   plugins: [
     react(),

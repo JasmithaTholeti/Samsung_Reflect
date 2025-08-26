@@ -7,31 +7,39 @@ import { mockAuth } from './middleware/auth.js';
 import entriesRouter from './routes/entries.js';
 import mediaRouter from './routes/media.js';
 import insightsRouter from './routes/insights.js';
-
+import imagesRouter from './routes/images.js';
+import searchRouter from './routes/search.js';
+import modelsRouter from './routes/models.js';
+import { vectorService } from './services/vectorService.js';
 
 await connectDB();
-
+await vectorService.initialize();
 
 const app = express();
-app.use(cors({ origin: config.corsOrigin, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    callback(null, origin || true); // allow any origin
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(mockAuth);
 
-
 // static files for uploaded media
 app.use('/uploads', express.static(path.resolve(config.uploadDir)));
-
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/entries', entriesRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/insights', insightsRouter);
-
+app.use('/api/images', imagesRouter);
+app.use('/api/search', searchRouter);
+app.use('/api/models', modelsRouter);
 
 // error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-console.error(err);
-res.status(400).json({ error: err?.message || 'Unknown error' });
+  console.error(err);
+  res.status(400).json({ error: err?.message || 'Unknown error' });
 });
 
 // after mongoose.connect(...)

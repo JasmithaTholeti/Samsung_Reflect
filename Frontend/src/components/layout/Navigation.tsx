@@ -9,7 +9,8 @@ import {
   Settings, 
   Moon, 
   Sun, 
-  Lock 
+  Lock,
+  Search
 } from "lucide-react";
 
 export const Navigation = () => {
@@ -25,6 +26,7 @@ export const Navigation = () => {
 
   const navItems = [
     { icon: Home, label: "Journal", path: "/" },
+    { icon: Search, label: "AI Search", path: "/search" },
     { icon: Heart, label: "Memories", path: "/memories" },
     { icon: BarChart3, label: "Insights", path: "/insights" },
     { icon: Settings, label: "Settings", path: "/settings" }
