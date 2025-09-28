@@ -1,13 +1,13 @@
 # SamsungReflect
 # Frontend – Samsung Reflect 🚀
 
-## Overview
+## 1. Overview
 
 The `Frontend` directory provides the user interface for **Samsung Reflect**, an **AI-powered image search and journal platform**. This React-based frontend allows users to create rich journal entries, upload and analyze images, search with natural language, visualize results, and manage preferences. It communicates with the backend API (typically served at `http://localhost:3001`) for all data and AI features.
 
----
+***
 
-## Architecture
+## 2. Architecture
 
 | Component | Technology | Description |
 | :--- | :--- | :--- |
@@ -18,18 +18,18 @@ The `Frontend` directory provides the user interface for **Samsung Reflect**, an
 | **Routing** | **React Router v6** | Declarative navigation and routing logic. |
 | **Testing** | **Jest** | Framework used for unit and component testing. |
 
----
+***
 
-## Prerequisites
+## 3. Prerequisites
 
 Before starting the frontend application, ensure you have:
 
 * **Node.js 18+** installed on your system.
 * The backend services (API, ML Service, Databases) running (recommended via `docker-compose up -d` from the root directory).
 
----
+***
 
-## Installation & Setup
+## 4. Installation & Setup
 
 Follow these steps to get the frontend development server running locally:
 
@@ -37,12 +37,12 @@ Follow these steps to get the frontend development server running locally:
 # Navigate into the frontend directory from the project root
 cd Frontend
 
-# 1. Install dependencies
+# 4.1. Install dependencies
 npm install
 
-# 2. Copy environment example if required
+# 4.2. Copy environment example if required
 cp .env.example .env
 # Edit .env with your configuration (e.g., if the backend is on a different port)
 
-# 3. Start the development server
+# 4.3. Start the development server
 npm run dev
