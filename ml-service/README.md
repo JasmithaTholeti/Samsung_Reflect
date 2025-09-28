@@ -91,13 +91,13 @@ python -m pytest
 
 ## 8. Developer Notes 
 
-1.  **Performance:**
+* **Performance:**
     * **GPU Acceleration:** If PyTorch detects a CUDA-enabled GPU, inference will be significantly faster (e.g., YOLOv8: ~1ms/image).
     * **CPU Fallback:** The service is configured to automatically fall back to CPU when no GPU is detected (~50-300ms/image, depending on model).
-2.  **Adding New Models:**
+*  **Adding New Models:**
     * Place new model files in the appropriate subdirectory under the `models/` folder.
     * Extend `main.py` (or add a new route/service) for the new inference type and model loading logic.
-3.  **Inference Configuration:**
+*  **Inference Configuration:**
     * The `SERVER_INFERENCE` flag (managed via `.env`) enables/disables server-side inference.
     * Other flags, such as `MIN_DETECTION_SCORE` and `MODEL_DIR`, are configurable via environment variables.
-4.  **Production Notes:** For production deployment, consider running with multiple workers: `uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2`. Use Docker for containerized deployment (see root README).
+*  **Production Notes:** For production deployment, consider running with multiple workers: `uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2`. Use Docker for containerized deployment (see root README).
