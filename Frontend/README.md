@@ -40,3 +40,31 @@ npm run dev
 ```
 
 
+## 5. Features 
+
+This application provides the following core and AI-powered features for users:
+
+1.  **Journal System:** Rich text journal entries with mood tracking.
+2.  **Image Upload:** Drag & drop interface, supporting large images and files.
+3.  **AI-Powered Analysis:** Initiates object detection (YOLO), scene recognition (Places365), and CLIP-based semantic search via the backend.
+4.  **Search Interface:** Natural language search with class and scene filters, displaying similar/related images.
+5.  **Detection Overlays:** Visualizes detected objects and scenes on uploaded images.
+6.  **Dashboard & Insights:** Data visualizations of journal and image analytics.
+7.  **Mobile Support:** Responsive design optimized for touch and Android WebView.
+
+***
+
+## 6. Access
+
+Once the development server is running, access the frontend application in your web browser at:
+
+**$\rightarrow$ `http://localhost:5173`**
+
+***
+
+## 7. Testing
+
+To run unit and component tests for the frontend:
+
+```bash
+npm test
