@@ -1,4 +1,4 @@
-# Scripts Directory – Samsung Reflect
+# Scripts Directory 
 
 ## 1. Overview
 
