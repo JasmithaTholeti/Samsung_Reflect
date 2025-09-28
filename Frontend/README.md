@@ -58,7 +58,7 @@ This application provides the following core and AI-powered features for users:
 
 Once the development server is running, access the frontend application in your web browser at:
 
-**$\rightarrow$ `http://localhost:5173`**
+**`http://localhost:5173`**
 
 ***
 
