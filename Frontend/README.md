@@ -37,3 +37,6 @@ cp .env.example .env
 
 # 4.3. Start the development server
 npm run dev
+'''
+
+
