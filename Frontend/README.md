@@ -20,15 +20,6 @@ The `Frontend` directory provides the user interface for **Samsung Reflect**, an
 
 ***
 
-## 3. Prerequisites
-
-Before starting the frontend application, ensure you have:
-
-* **Node.js 18+** installed on your system.
-* The backend services (API, ML Service, Databases) running (recommended via `docker-compose up -d` from the root directory).
-
-***
-
 ## 4. Installation & Setup
 
 Follow these steps to get the frontend development server running locally:
@@ -37,7 +28,7 @@ Follow these steps to get the frontend development server running locally:
 # Navigate into the frontend directory from the project root
 cd Frontend
 
-# 4.1. Install dependencies
+# 4.1. Install dependencies (Dependencies are listed in package.json)
 npm install
 
 # 4.2. Copy environment example if required
@@ -46,6 +37,3 @@ cp .env.example .env
 
 # 4.3. Start the development server
 npm run dev
- 
-
-
