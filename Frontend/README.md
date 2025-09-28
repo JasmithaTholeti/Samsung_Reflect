@@ -1,5 +1,5 @@
 # SamsungReflect
-# Frontend – Samsung Reflect 🚀
+# Frontend – Samsung Reflect 
 
 ## 1. Overview
 
@@ -46,8 +46,10 @@ cp .env.example .env
 
 # 4.3. Start the development server
 npm run dev
+'''
 
-## 5. Features ✨
+
+## 5. Features 
 
 This application provides the following core and AI-powered features for users:
 
