@@ -1,4 +1,4 @@
-# ML Service – Samsung Reflect 🧠
+# ML Service – Samsung Reflect 
 
 ## 1. Overview
 
@@ -86,9 +86,10 @@ To run the full test suite (which requires Python dependencies to be installed):
 
 ```bash
 python -m pytest
+```
 
 
-## 8. Developer Notes 🛠️
+## 8. Developer Notes 
 
 1.  **Performance:**
     * **GPU Acceleration:** If PyTorch detects a CUDA-enabled GPU, inference will be significantly faster (e.g., YOLOv8: ~1ms/image).
