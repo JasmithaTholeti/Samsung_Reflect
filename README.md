@@ -1,22 +1,57 @@
-# Samsung Reflect - AI-Powered Image Search
+# Samsung Reflect – AI-Powered Journaling Companion
 
-A comprehensive MERN stack application with YOLO object detection, Places365 scene classification, and CLIP embeddings for intelligent image search and analysis.
+## Preview
+https://github.com/user-attachments/assets/71ad95c6-cfdb-49df-9a4d-7f5621193cf4
 
-## Features
+A comprehensive **MERN stack application** focused on **smart journaling and self-reflection**, powered by **multi-modal AI** for seamless use of text, photos, audio, and intelligent media processing.
 
-### Core Functionality (Preserved)
-- **Journal System**: Rich text journal entries with mood tracking
-- **Media Upload**: Support for images and files up to 100MB
-- **Insights Dashboard**: Analytics and data visualization
-- **Settings Management**: User preferences and configuration
+---
 
-### New AI Features
-- **Object Detection**: YOLO-powered detection of 80+ object classes
-- **Scene Classification**: Places365 scene recognition (365 categories)
-- **Semantic Search**: Natural language queries using CLIP embeddings
-- **Visual Similarity**: Find similar images using vector search
-- **Real-time Processing**: Asynchronous image analysis pipeline
-- **Android WebView Support**: Optimized for mobile deployment
+## ✨ Features
+
+### 📔 Core Journaling Experience
+- **Intelligent Journal System**  
+  Create rich stories combining text, photos, videos, and audio, enhanced with **AI mood detection**.
+
+- **Smart Media Suggestions**  
+  Get relevant photo, video, or audio recommendations from your gallery as you type.
+
+- **Flexible Canvas**  
+  Drag, resize, and crop journal elements to design your stories your way.
+
+- **Memories Library**  
+  Save, revisit, edit, and favorite your journals with **privacy controls** like pass-key-locked folders.
+
+- **Insights Dashboard**  
+  View **streaks, activity reports, and mood trends** to stay motivated.
+
+- **Settings & Privacy**  
+  Manage preferences, data, and security with full control.
+
+- **Standby Mode**  
+  Access and use your journals in **standby mode** across all your Samsung devices, keeping your reflections available anytime, even when your device is idle.
+---
+
+### 🤖 Enhanced AI Features
+- **Semantic Media Search**  
+  Quickly find the right photos, videos, or audio by **location, objects, context, and more** to enrich your journal entries.
+
+- **Object & Scene Detection**  
+  Automatically identify **objects, scenes, and faces** in your media to improve recommendations and organization.
+
+- **AI-Powered Media Processing**  
+  Analyze and process **images, audio, and text in real time** for smart suggestions, mood insights, and seamless journal creation.
+
+- **Real-Time Performance**  
+  Fast and efficient pipeline for **media clustering, retrieval, and personalized recommendations**.
+
+- **Android WebView Support**  
+  Smooth and optimized experience for **mobile devices**.
+
+---
+
+## 🚀 About Samsung Reflect
+Samsung Reflect is designed to make **journaling more meaningful and intelligent**, transforming memories into personalized stories while keeping your data secure and accessible across Samsung devices.
 
 ## Architecture
 
@@ -53,6 +88,7 @@ A comprehensive MERN stack application with YOLO object detection, Places365 sce
 ### Prerequisites
 - Node.js 18+ (for local development)
 - Python 3.11+ (for ML service development)
+- Docker v20.10+ – for consistent environment setup
 
 ### Development Setup
 
@@ -94,22 +130,6 @@ A comprehensive MERN stack application with YOLO object detection, Places365 sce
    - API: http://localhost:3001
    - ML Service: http://localhost:8000
    - AI Search: http://localhost:5173/search
-
-## API Endpoints
-
-### Existing Endpoints (Preserved)
-- `GET /api/health` - Service health check
-- `POST /api/entries` - Create journal entry
-- `GET /api/entries` - List journal entries
-- `POST /api/media` - Upload media files
-- `GET /api/insights` - Get analytics data
-
-### New AI Endpoints
-- `POST /api/images/upload` - Upload image for AI analysis
-- `GET /api/images/:id` - Get image with detection results
-- `POST /api/search` - Text-based image search
-- `POST /api/search/similar/:imageId` - Find similar images
-- `GET /api/models/health` - AI model status
 
 ## Usage Examples
 
@@ -175,18 +195,11 @@ Search ranking parameters are configurable in `config/ranking.json`:
 
 ## Performance
 
-### Benchmarks (Single Image)
-- **YOLOv8n**: ~50ms CPU, ~1ms GPU
-- **Places365**: ~200ms CPU, ~10ms GPU  
-- **CLIP Embedding**: ~300ms CPU, ~15ms GPU
-- **Vector Search**: ~5ms for 10K images
-- **End-to-end**: ~1s CPU, ~100ms GPU
-
 ### Scalability
 - **Concurrent Users**: 100+ with proper scaling
 - **Image Database**: Tested with 100K+ images
 - **Search Performance**: Sub-second for most queries
-- **Storage**: Configurable (local/S3/GCS)
+- **Storage**: Configurable (local)
 
 ## Android WebView Support
 
@@ -196,26 +209,6 @@ Search ranking parameters are configurable in `config/ranking.json`:
 - **Camera Integration**: Direct camera capture
 - **Offline Capability**: Client-side inference option
 - **Performance**: Lazy loading and image optimization
-
-### WebView Configuration
-```javascript
-// Enable required permissions
-webView.getSettings().setJavaScriptEnabled(true);
-webView.getSettings().setDomStorageEnabled(true);
-webView.getSettings().setAllowFileAccess(true);
-webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-```
-
-## Deployment
-
-### Production Deployment
-```bash
-# Build production images
-docker-compose -f docker-compose.prod.yml build
-
-# Deploy with SSL and monitoring
-docker-compose -f docker-compose.prod.yml up -d
-```
 
 ### Monitoring & Observability
 - Health check endpoints for all services
@@ -263,47 +256,3 @@ cd Frontend && npm test
 # Run ML service tests
 cd ml-service && python -m pytest
 ```
-
-## Troubleshooting
-
-### Common Issues
-1. **Models not loading**: Check `models/README.md` for download instructions
-2. **Slow inference**: Verify GPU acceleration is enabled
-3. **Search returns no results**: Check vector database connection
-4. **Memory issues**: Use smaller models or reduce batch size
-
-### Debug Commands
-```bash
-# Check service logs
-docker-compose logs -f api
-docker-compose logs -f python-ml
-
-# Verify model health
-curl http://localhost:3001/api/models/health
-
-# Check vector database
-curl http://localhost:6333/collections
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes with tests
-4. Submit a pull request
-
-### Code Standards
-- **TypeScript**: Strict mode enabled
-- **Python**: PEP 8 compliance
-- **React**: Functional components with hooks
-- **Testing**: Unit tests for critical paths
-
-## License
-
-[Your License Here]
-
-## Support
-
-- **Documentation**: See `RUNBOOK.md` for operations
-- **Issues**: GitHub Issues
-- **Discussions**: GitHub Discussions
