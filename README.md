@@ -51,7 +51,6 @@ A comprehensive MERN stack application with YOLO object detection, Places365 sce
 ## Quick Start
 
 ### Prerequisites
-- Docker & Docker Compose
 - Node.js 18+ (for local development)
 - Python 3.11+ (for ML service development)
 
