@@ -89,7 +89,7 @@ To run unit and integration tests for the backend:
 npm test
 ```
 
-## 7. Developer Notes 🛠️
+## 7. Developer Notes 
 
 This section outlines important conventions and internal architectural details:
 
