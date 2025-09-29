@@ -3,6 +3,9 @@
 ## Preview
 https://github.com/user-attachments/assets/71ad95c6-cfdb-49df-9a4d-7f5621193cf4
 
+## 🎥 Project Preview
+[![Watch the video](https://img.youtube.com/vi/X5jNAz6htws/0.jpg)](https://youtu.be/X5jNAz6htws)
+
 A comprehensive **MERN stack application** focused on **smart journaling and self-reflection**, powered by **multi-modal AI** for seamless use of text, photos, audio, and intelligent media processing.
 
 ---
