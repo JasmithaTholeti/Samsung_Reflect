@@ -99,10 +99,8 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
 
 1. **Clone and Configure**
    ```bash
-   git clone <repository>
+   git clone https://github.com/JasmithaTholeti/Samsung_Reflect.git
    cd SamsungReflect
-   cp .env.example .env
-   # Edit .env with your configuration
    ```
 
 2. **Download AI Models**
@@ -136,35 +134,6 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
    - ML Service: http://localhost:8000
    - AI Search: http://localhost:5173/search
 
-## Usage Examples
-
-### Upload and Analyze Image
-```bash
-curl -X POST http://localhost:3001/api/images/upload \
-  -F "image=@photo.jpg"
-```
-
-### Search Images
-```bash
-curl -X POST http://localhost:3001/api/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "dog playing in park",
-    "topK": 10,
-    "filter": {
-      "classes": ["dog"],
-      "scenes": ["park", "outdoor"]
-    }
-  }'
-```
-
-### Find Similar Images
-```bash
-curl -X POST http://localhost:3001/api/search/similar/IMAGE_ID \
-  -H "Content-Type: application/json" \
-  -d '{"topK": 5}'
-```
-
 ## Configuration
 
 ### Environment Variables
@@ -188,39 +157,6 @@ SCENE_WEIGHT=0.3
 AGGREGATION_METHOD=weighted
 ```
 
-### Model Configuration
-Models are configured in `models/README.md` with download instructions and performance benchmarks.
-
-### Ranking Configuration
-Search ranking parameters are configurable in `config/ranking.json`:
-- Object vs scene weighting
-- Aggregation methods (max, avg, weighted)
-- Filtering options
-- A/B testing variants
-
-## Performance
-
-### Scalability
-- **Concurrent Users**: 100+ with proper scaling
-- **Image Database**: Tested with 100K+ images
-- **Search Performance**: Sub-second for most queries
-- **Storage**: Configurable (local)
-
-## Android WebView Support
-
-### Optimizations
-- **Responsive Design**: Mobile-first UI components
-- **Touch Interactions**: Optimized for touch devices
-- **Camera Integration**: Direct camera capture
-- **Offline Capability**: Client-side inference option
-- **Performance**: Lazy loading and image optimization
-
-### Monitoring & Observability
-- Health check endpoints for all services
-- Structured logging with correlation IDs
-- Performance metrics collection
-- Error tracking and alerting
-
 ## Development
 
 ### Project Structure
@@ -242,22 +178,4 @@ SamsungReflect/
 ├── models/                 # AI model files
 ├── config/                # Configuration files
 └── docker-compose.yml     # Development setup
-```
-
-### Adding New Features
-1. **Backend**: Add routes in `backend/src/routes/`
-2. **Frontend**: Add components in `Frontend/src/features/`
-3. **ML**: Extend `ml-service/main.py`
-4. **Database**: Add models in `backend/src/models/`
-
-### Testing
-```bash
-# Run backend tests
-cd backend && npm test
-
-# Run frontend tests
-cd Frontend && npm test
-
-# Run ML service tests
-cd ml-service && python -m pytest
 ```
