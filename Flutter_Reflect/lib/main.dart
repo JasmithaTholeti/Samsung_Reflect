@@ -1,0 +1,227 @@
+import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Reflect',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  WebViewController? controller;
+  bool canGoBack = false;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initWebViewAndPermissions();
+  }
+
+  Future<void> _initWebViewAndPermissions() async {
+    try {
+      await _requestPermissions();
+      await _initializeWebView();
+    } catch (e, stackTrace) {
+      debugPrint('Error in initialization: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
+
+  Future<void> _requestPermissions() async {
+    try {
+      debugPrint('Requesting storage permission...');
+      final storageStatus = await Permission.storage.request();
+      debugPrint('Storage permission status: $storageStatus');
+
+      debugPrint('Requesting camera permission...');
+      final cameraStatus = await Permission.camera.request();
+      debugPrint('Camera permission status: $cameraStatus');
+
+      debugPrint('Requesting photos permission...');
+      final photosStatus = await Permission.photos.request();
+      debugPrint('Photos permission status: $photosStatus');
+
+      debugPrint('Requesting videos permission...');
+      final videosStatus = await Permission.videos.request();
+      debugPrint('Videos permission status: $videosStatus');
+    } catch (e, stackTrace) {
+      debugPrint('Error requesting permissions: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
+
+  Future<void> _initializeWebView() async {
+    try {
+      debugPrint('Starting WebView initialization');
+      late final PlatformWebViewControllerCreationParams params;
+
+      if (WebViewPlatform.instance is WebKitWebViewPlatform) {
+        debugPrint('Initializing WebKit WebView');
+        params = WebKitWebViewControllerCreationParams(
+          allowsInlineMediaPlayback: true,
+          mediaTypesRequiringUserAction: const {},
+        );
+      } else {
+        debugPrint('Initializing Android WebView');
+        params = const PlatformWebViewControllerCreationParams();
+      }
+
+      final webViewController = WebViewController.fromPlatformCreationParams(
+        params,
+      );
+
+      if (webViewController.platform is AndroidWebViewController) {
+        debugPrint('Configuring Android WebView');
+        final androidController =
+            webViewController.platform as AndroidWebViewController;
+        androidController.setMediaPlaybackRequiresUserGesture(false);
+        androidController.setOnShowFileSelector((params) async {
+          debugPrint('File selector called with params: $params');
+          final acceptTypes = params.acceptTypes;
+          debugPrint('Accept types: $acceptTypes');
+          final isMultiple = params.mode == FileSelectorMode.openMultiple;
+          debugPrint('Multiple selection: $isMultiple');
+
+          try {
+            final fileType =
+                acceptTypes.isNotEmpty && acceptTypes.first.startsWith('image/')
+                ? FileType.image
+                : FileType.any;
+
+            final result = await FilePicker.platform.pickFiles(
+              type: fileType,
+              allowMultiple: isMultiple,
+              withData: false,
+              withReadStream: true,
+            );
+
+            if (result != null && result.files.isNotEmpty) {
+              final paths = result.files
+                  .where((file) => file.path != null)
+                  .map((file) => Uri.file(file.path!).toString())
+                  .toList();
+              debugPrint('Selected files: $paths');
+              return paths;
+            } else {
+              debugPrint('No files selected');
+              return <String>[];
+            }
+          } catch (e, stackTrace) {
+            debugPrint('Error picking file: $e');
+            debugPrint('Stack trace: $stackTrace');
+            return <String>[];
+          }
+        });
+      }
+
+      debugPrint('Configuring WebView settings');
+      await webViewController.setJavaScriptMode(JavaScriptMode.unrestricted);
+      await webViewController.setBackgroundColor(const Color(0x00000000));
+      await webViewController.setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            debugPrint('Loading progress: $progress%');
+            if (progress == 100) {
+              setState(() {
+                isLoading = false;
+              });
+            }
+          },
+          onPageStarted: (String url) {
+            debugPrint('Page started loading: $url');
+            setState(() {
+              isLoading = true;
+            });
+          },
+          onPageFinished: (String url) {
+            debugPrint('Page finished loading: $url');
+            setState(() {
+              isLoading = false;
+            });
+            _checkCanGoBack();
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint('WebView error: ${error.description}');
+            debugPrint('Error code: ${error.errorCode}');
+            debugPrint('Error type: ${error.errorType}');
+          },
+        ),
+      );
+      await webViewController.enableZoom(true);
+      await webViewController.clearCache();
+      await webViewController.clearLocalStorage();
+
+      debugPrint('Loading initial URL');
+      await webViewController.loadRequest(
+        Uri.parse('https://e6fca8aa384b.ngrok-free.app'),
+      );
+      debugPrint('WebView initialization complete');
+
+      setState(() {
+        controller = webViewController;
+      });
+    } catch (e, stackTrace) {
+      debugPrint('Error initializing WebView: $e');
+      debugPrint('Stack trace: $stackTrace');
+      setState(() {
+        controller = null;
+      });
+    }
+  }
+
+  Future<void> _checkCanGoBack() async {
+    if (controller == null) return;
+
+    final canNavigateBack = await controller!.canGoBack();
+    setState(() {
+      canGoBack = canNavigateBack;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (canGoBack && controller != null) {
+          controller!.goBack();
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              if (controller != null) WebViewWidget(controller: controller!),
+              if (isLoading) const Center(child: CircularProgressIndicator()),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
