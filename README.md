@@ -1,5 +1,7 @@
 # Samsung Reflect – AI-Powered Journaling Companion
 
+[![Watch the Demo](https://img.youtube.com/vi/MTtiyKc8f2g/0.jpg)](https://youtu.be/MTtiyKc8f2g?si=BABhV4ATLIEBAtIL)
+
 A comprehensive **MERN stack application** focused on **smart journaling and self-reflection**, powered by **multi-modal AI** for seamless use of text, photos, audio, and intelligent media processing.
 
 ---
