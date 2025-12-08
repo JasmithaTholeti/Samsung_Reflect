@@ -100,7 +100,7 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
 1. **Clone and Configure**
    ```bash
    git clone https://github.com/JasmithaTholeti/Samsung_Reflect.git
-   cd SamsungReflect
+   cd Samsung_Reflect
    ```
 
 2. **Download AI Models**
