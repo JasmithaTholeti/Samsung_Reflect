@@ -8,9 +8,14 @@ import base64
 import numpy as np
 from PIL import Image
 import torch
-import cv2
-from ultralytics import YOLO, YOLOE
+# Removed cv2 import as it wasn't used in the provided snippet, 
+# but if you need it for other parts, keep it. 
+# from ultralytics import YOLO, YOLOE # Commented out if not installed yet, ensure they are in requirements
+from ultralytics import YOLO
 import logging
+
+# --- NEW IMPORT FOR GENAI ---
+from transformers import pipeline, set_seed
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +41,8 @@ NMS_IOU_THRESHOLD = float(os.getenv("NMS_IOU_THRESHOLD", "0.45"))
 models = {
     "yolo": None,
     "places365": None,
-    "clip": None
+    "clip": None,
+    "generator": None  # <--- Added storage for the GenAI model
 }
 
 # Pydantic models
@@ -48,7 +54,7 @@ class DetectionResult(BaseModel):
     object_id: str
     class_name: str
     score: float
-    bbox: List[float]  # [x, y, w, h]
+    bbox: List[float]
     crop_url: Optional[str] = None
 
 class SceneResult(BaseModel):
@@ -72,24 +78,36 @@ class HealthResponse(BaseModel):
     yolo: bool
     places365: bool
     clip: bool
+    generator: bool # <--- Added to health check
+
+# --- NEW MODELS FOR TEXT GENERATION ---
+class TextGenerationRequest(BaseModel):
+    text: str
+    max_length: int = 50  # How many words to generate maximum
+
+class TextGenerationResponse(BaseModel):
+    generated_text: str
 
 def load_models():
     """Load all ML models on startup"""
     global models
     
+    # 1. Load YOLO model
     try:
-        # Load YOLO model
-        yolo_path = os.path.join(MODEL_DIR, "yolo", "yoloe-11l-seg-pf.pt")
+        # Note: Ensure the file name matches exactly what you downloaded (yolov8n.pt usually)
+        # I changed the path to match the standard download name 'yolov8n.pt' based on our previous chat
+        # If your file is named 'yoloe-11l-seg-pf.pt', change it back!
+        yolo_path = os.path.join(MODEL_DIR, "yolo", "yolov8n.pt") 
         if os.path.exists(yolo_path):
-            models["yolo"] = YOLOE(yolo_path)
+            models["yolo"] = YOLO(yolo_path) # Changed YOLOE to YOLO for standard v8
             logger.info("YOLO model loaded successfully")
         else:
             logger.warning(f"YOLO model not found at {yolo_path}")
     except Exception as e:
         logger.error(f"Failed to load YOLO model: {e}")
     
+    # 2. Load Places365 model
     try:
-        # Load Places365 model (placeholder - implement based on chosen model)
         places_path = os.path.join(MODEL_DIR, "places365", "resnet50_places365.pth")
         if os.path.exists(places_path):
             # models["places365"] = load_places365_model(places_path)
@@ -99,19 +117,26 @@ def load_models():
     except Exception as e:
         logger.error(f"Failed to load Places365 model: {e}")
     
+    # 3. Load CLIP model
     try:
-        # Load CLIP model
         clip_path = os.path.join(MODEL_DIR, "clip")
-        if os.path.exists(clip_path):
-            import clip
-            import torch
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            models["clip"], _ = clip.load("ViT-B/32", device=device)
-            logger.info("CLIP model loaded successfully")
-        else:
-            logger.warning(f"CLIP model not found at {clip_path}")
+        # We don't strictly need the file path if we use the library, but good for checking
+        import clip
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        models["clip"], _ = clip.load("ViT-B/32", device=device)
+        logger.info("CLIP model loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load CLIP model: {e}")
+
+    # 4. Load GENAI Text Generator (New!)
+    try:
+        logger.info("Loading DistilGPT-2 model...")
+        # 'pipeline' handles downloading and setting up the model automatically
+        models["generator"] = pipeline('text-generation', model='distilgpt2')
+        logger.info("DistilGPT-2 loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load Generator model: {e}")
+
 
 def decode_image(image_base64: str) -> np.ndarray:
     """Decode base64 image to numpy array"""
@@ -135,7 +160,6 @@ def run_yolo_detection(image: np.ndarray) -> List[DetectionResult]:
             x1, y1, x2, y2, conf, cls = result.tolist()
             class_name = models["yolo"].names[int(cls)]
             
-            # Convert to [x, y, w, h] format
             bbox = [x1, y1, x2 - x1, y2 - y1]
             
             detection = DetectionResult(
@@ -143,7 +167,7 @@ def run_yolo_detection(image: np.ndarray) -> List[DetectionResult]:
                 class_name=class_name,
                 score=conf,
                 bbox=bbox,
-                crop_url=None  # Will be set after cropping
+                crop_url=None
             )
             detections.append(detection)
         
@@ -165,8 +189,45 @@ async def health_check():
     return HealthResponse(
         yolo=models["yolo"] is not None,
         places365=models["places365"] is not None,
-        clip=models["clip"] is not None
+        clip=models["clip"] is not None,
+        generator=models["generator"] is not None
     )
+
+# --- NEW ENDPOINT FOR TEXT GENERATION ---
+@app.post("/generate", response_model=TextGenerationResponse)
+async def generate_text(request: TextGenerationRequest):
+    """
+    Generate text based on the input prompt.
+    This provides the 'Autocomplete' functionality.
+    """
+    if models["generator"] is None:
+        raise HTTPException(status_code=503, detail="Generator model not loaded")
+    
+    try:
+        # Generate text
+        # max_new_tokens limits how much it writes (to keep it fast)
+        # num_return_sequences=1 means just give me 1 suggestion
+       
+        output = models["generator"](
+            request.text, 
+            max_new_tokens=15,       # Generate 15 new words max
+            num_return_sequences=1,
+            do_sample=True,          # Enable creativity
+            temperature=0.8,         # Higher = more creative (0.7 -> 0.8)
+            repetition_penalty=1.3,  # <--- THIS IS THE FIX (Punishes repeating words)
+            truncation=True          # Ensure it handles length properly
+        )
+        
+        # The pipeline returns a list of dicts: [{'generated_text': '...'}]
+        generated_full_text = output[0]['generated_text']
+        
+        # Usually, we only want the *new* part, but for now, let's return the whole thing
+        # The frontend can decide how to display it.
+        return TextGenerationResponse(generated_text=generated_full_text)
+
+    except Exception as e:
+        logger.error(f"Text generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
 
 @app.post("/detect", response_model=DetectionResponse)
 async def detect_objects(request: DetectionRequest):
@@ -174,17 +235,12 @@ async def detect_objects(request: DetectionRequest):
     if not request.image_base64 and not request.image_url:
         raise HTTPException(status_code=400, detail="Either image_base64 or image_url must be provided")
     
-    # For now, only support base64 images
     if not request.image_base64:
         raise HTTPException(status_code=400, detail="Only base64 images supported currently")
     
-    # Decode image
     image = decode_image(request.image_base64)
-    
-    # Run YOLO detection
     detections = run_yolo_detection(image)
     
-    # Placeholder scene classification
     scene = {
         "primary": "unknown",
         "labels": [{"label": "unknown", "score": 0.0}]
@@ -207,11 +263,9 @@ async def generate_embedding(request: EmbeddingRequest):
         import torch
         from PIL import Image
         
-        # Decode image
         image = decode_image(request.image_base64)
         image_pil = Image.fromarray(image)
         
-        # Preprocess and generate embedding
         device = "cuda" if torch.cuda.is_available() else "cpu"
         preprocess = clip.load("ViT-B/32", device=device)[1]
         image_input = preprocess(image_pil).unsqueeze(0).to(device)
@@ -259,11 +313,9 @@ async def generate_text_embedding(request: dict):
 
 @app.post("/scene", response_model=Dict[str, Any])
 async def classify_scene(request: DetectionRequest):
-    """Classify scene using Places365"""
     if models["places365"] is None:
         raise HTTPException(status_code=503, detail="Places365 model not loaded")
     
-    # Placeholder implementation
     return {
         "primary": "outdoor",
         "labels": [

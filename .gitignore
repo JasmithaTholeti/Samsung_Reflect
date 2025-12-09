@@ -1,0 +1,14 @@
+# Ignore Python Environment
+ml-service/venv/
+__pycache__/
+
+# Ignore Heavy Models
+models/
+
+# Ignore Secrets and Uploads
+backend/.env
+backend/uploads/
+
+# Ignore Node Modules (Frontend/Backend libraries)
+node_modules/
+.DS_Store
