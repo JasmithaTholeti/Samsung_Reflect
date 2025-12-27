@@ -27,7 +27,7 @@ A comprehensive **MERN stack application** focused on **smart journaling and sel
 - **Memories Library**  
   Save, revisit, edit, and favorite your journals with **privacy controls** like pass-key-locked folders.
 
-- **Insights Dashboard**  
+- **Insights Dashboard**    
   View **streaks, activity reports, and mood trends** to stay motivated.
 
 - **Settings & Privacy**  
