@@ -38,6 +38,15 @@ A comprehensive **MERN stack application** focused on **smart journaling and sel
 ---
 
 ### 🤖 Enhanced AI Features
+- **Generative AI Storytelling**
+    Instantly turn keywords into rich, descriptive diary entries using **Zephyr-7B** (via Hugging Face).
+  
+- **Smart "Thinking" Autocomplete**
+    Context-aware text suggestions that finish your sentences as you type, powered by LLMs.
+  
+- **Text-to-Image Generation**
+    Create custom cover art and illustrations for your journals using **Stable Diffusion XL**.
+  
 - **Semantic Media Search**  
   Quickly find the right photos, videos, or audio by **location, objects, context, and more** to enrich your journal entries.
 
@@ -79,14 +88,17 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
 - **Vector Search**: Qdrant vector database
 - **API Design**: RESTful with comprehensive error handling
 
-### ML Service (Python + FastAPI)
-- **Framework**: FastAPI with async support
-- **Models**: 
-  - YOLOv8 for object detection
-  - Places365 ResNet50 for scene classification
-  - CLIP ViT-B/32 for embeddings
-- **Inference**: PyTorch with optional ONNX support
-- **Performance**: GPU acceleration with CPU fallback
+#### ML Service (Python + FastAPI)
+
+- **Framework:** FastAPI with async support
+- **Generative AI (New):**
+    * **Text & Logic:** Hugging Face Inference API (**Zephyr-7B-Beta**) for storytelling and autocomplete.
+    * **Image Generation:** Stable Diffusion XL Base 1.0.
+- **Computer Vision (Local):**
+    * **Object Detection:** YOLOv8
+    * **Scene Classification:** Places365 ResNet50
+    * **Embeddings:** CLIP ViT-B/32
+- **Security:** Environment-based secret management (`.env`) for API keys.
 
 ## Quick Start
 
@@ -102,8 +114,15 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
    git clone https://github.com/JasmithaTholeti/Samsung_Reflect.git
    cd Samsung_Reflect
    ```
+2. **Set up ML Service Secrets**
+   ```bash
+    cd ml-service
+    touch .env
+    echo "HF_API_KEY=your_hugging_face_token_here" >> .env
+    cd ..
+   ```
 
-2. **Download AI Models**
+3. **Download AI Models**
    ```bash
    # Create models directory
    mkdir -p models/{yolo,places365,clip}
@@ -114,12 +133,12 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
    # Places365 and CLIP models will be downloaded automatically on first run
    ```
 
-3. **Start Services**
+4. **Start Services**
    ```bash
    docker-compose up -d
    ```
 
-4. **Verify Installation**
+5. **Verify Installation**
    ```bash
    # Check API health
    curl http://localhost:3001/api/health
@@ -128,7 +147,7 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
    curl http://localhost:3001/api/models/health
    ```
 
-5. **Access Application**
+6. **Access Application**
    - Frontend: http://localhost:5173
    - API: http://localhost:3001
    - ML Service: http://localhost:8000
@@ -155,6 +174,9 @@ ENABLE_RERANKING=true
 OBJECT_WEIGHT=0.7
 SCENE_WEIGHT=0.3
 AGGREGATION_METHOD=weighted
+
+# Generative AI Secrets (Required)
+HF_API_KEY=your_hugging_face_token_here
 ```
 
 ## Development
