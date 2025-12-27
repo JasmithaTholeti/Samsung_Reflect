@@ -39,13 +39,13 @@ A comprehensive **MERN stack application** focused on **smart journaling and sel
 
 ### 🤖 Enhanced AI Features
 - **Generative AI Storytelling**
-    Instantly turn keywords into rich, descriptive diary entries using **Zephyr-7B** (via Hugging Face).
+  Instantly turn keywords into rich, descriptive diary entries using **Zephyr-7B** (via Hugging Face).
   
 - **Smart "Thinking" Autocomplete**
-    Context-aware text suggestions that finish your sentences as you type, powered by LLMs.
+  Context-aware text suggestions that finish your sentences as you type, powered by LLMs.
   
 - **Text-to-Image Generation**
-    Create custom cover art and illustrations for your journals using **Stable Diffusion XL**.
+  Create custom cover art and illustrations for your journals using **Stable Diffusion XL**.
   
 - **Semantic Media Search**  
   Quickly find the right photos, videos, or audio by **location, objects, context, and more** to enrich your journal entries.
@@ -106,6 +106,7 @@ Samsung Reflect is designed to make **journaling more meaningful and intelligent
 - Node.js 18+ (for local development)
 - Python 3.11+ (for ML service development)
 - Docker v20.10+ – for consistent environment setup
+- Hugging Face API Token – Required for Generative AI features (Free tier is sufficient)
 
 ### Development Setup
 
