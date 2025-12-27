@@ -1,29 +1,37 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-import os
+from typing import List
 import io
 import base64
-import numpy as np
-from PIL import Image
-import torch
-# Removed cv2 import as it wasn't used in the provided snippet, 
-# but if you need it for other parts, keep it. 
-# from ultralytics import YOLO, YOLOE # Commented out if not installed yet, ensure they are in requirements
-from ultralytics import YOLO
 import logging
+import re  # <--- NEW: Regex for powerful cleaning
+from huggingface_hub import InferenceClient
 
-# --- NEW IMPORT FOR GENAI ---
-from transformers import pipeline, set_seed
-
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Samsung Reflect ML Service", version="1.0.0")
+app = FastAPI(title="Samsung Reflect ML Service", version="25.0.0")
 
-# CORS middleware
+# --- CONFIGURATION ---
+import os
+from dotenv import load_dotenv
+
+# Load secrets from .env file
+load_dotenv()
+
+# Get the key safely
+HF_API_KEY = os.getenv("HF_API_KEY")
+if not HF_API_KEY:
+    raise ValueError("Missing HF_API_KEY in .env file!")
+
+# Initialize Client
+client = InferenceClient(token=HF_API_KEY)
+
+# Unified Model (Zephyr-7B)
+UNIFIED_MODEL = "HuggingFaceH4/zephyr-7b-beta"
+IMAGE_MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,297 +40,141 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configuration
-MODEL_DIR = os.getenv("MODEL_DIR", "./models")
-MIN_DETECTION_SCORE = float(os.getenv("MIN_DETECTION_SCORE", "0.25"))
-NMS_IOU_THRESHOLD = float(os.getenv("NMS_IOU_THRESHOLD", "0.45"))
-
-# Global model storage
-models = {
-    "yolo": None,
-    "places365": None,
-    "clip": None,
-    "generator": None  # <--- Added storage for the GenAI model
-}
-
-# Pydantic models
-class DetectionRequest(BaseModel):
-    image_url: Optional[str] = None
-    image_base64: Optional[str] = None
-
-class DetectionResult(BaseModel):
-    object_id: str
-    class_name: str
-    score: float
-    bbox: List[float]
-    crop_url: Optional[str] = None
-
-class SceneResult(BaseModel):
-    label: str
-    score: float
-
-class DetectionResponse(BaseModel):
-    image_id: str
-    objects: List[DetectionResult]
-    scene: Dict[str, Any]
-
-class EmbeddingRequest(BaseModel):
-    image_base64: str
-    model: str = "clip"
-
-class EmbeddingResponse(BaseModel):
-    embedding: List[float]
-    dims: int
-
-class HealthResponse(BaseModel):
-    yolo: bool
-    places365: bool
-    clip: bool
-    generator: bool # <--- Added to health check
-
-# --- NEW MODELS FOR TEXT GENERATION ---
 class TextGenerationRequest(BaseModel):
     text: str
-    max_length: int = 50  # How many words to generate maximum
 
 class TextGenerationResponse(BaseModel):
     generated_text: str
 
-def load_models():
-    """Load all ML models on startup"""
-    global models
-    
-    # 1. Load YOLO model
-    try:
-        # Note: Ensure the file name matches exactly what you downloaded (yolov8n.pt usually)
-        # I changed the path to match the standard download name 'yolov8n.pt' based on our previous chat
-        # If your file is named 'yoloe-11l-seg-pf.pt', change it back!
-        yolo_path = os.path.join(MODEL_DIR, "yolo", "yolov8n.pt") 
-        if os.path.exists(yolo_path):
-            models["yolo"] = YOLO(yolo_path) # Changed YOLOE to YOLO for standard v8
-            logger.info("YOLO model loaded successfully")
-        else:
-            logger.warning(f"YOLO model not found at {yolo_path}")
-    except Exception as e:
-        logger.error(f"Failed to load YOLO model: {e}")
-    
-    # 2. Load Places365 model
-    try:
-        places_path = os.path.join(MODEL_DIR, "places365", "resnet50_places365.pth")
-        if os.path.exists(places_path):
-            # models["places365"] = load_places365_model(places_path)
-            logger.info("Places365 model path found")
-        else:
-            logger.warning(f"Places365 model not found at {places_path}")
-    except Exception as e:
-        logger.error(f"Failed to load Places365 model: {e}")
-    
-    # 3. Load CLIP model
-    try:
-        clip_path = os.path.join(MODEL_DIR, "clip")
-        # We don't strictly need the file path if we use the library, but good for checking
-        import clip
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        models["clip"], _ = clip.load("ViT-B/32", device=device)
-        logger.info("CLIP model loaded successfully")
-    except Exception as e:
-        logger.error(f"Failed to load CLIP model: {e}")
+class StoryRequest(BaseModel):
+    images: List[str] = [] 
+    keywords: str
 
-    # 4. Load GENAI Text Generator (New!)
-    try:
-        logger.info("Loading DistilGPT-2 model...")
-        # 'pipeline' handles downloading and setting up the model automatically
-        models["generator"] = pipeline('text-generation', model='distilgpt2')
-        logger.info("DistilGPT-2 loaded successfully")
-    except Exception as e:
-        logger.error(f"Failed to load Generator model: {e}")
+class ImageGenRequest(BaseModel):
+    prompt: str
 
-
-def decode_image(image_base64: str) -> np.ndarray:
-    """Decode base64 image to numpy array"""
-    try:
-        image_data = base64.b64decode(image_base64.split(',')[-1])
-        image = Image.open(io.BytesIO(image_data))
-        return np.array(image.convert('RGB'))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image data: {e}")
-
-def run_yolo_detection(image: np.ndarray) -> List[DetectionResult]:
-    """Run YOLO detection on image"""
-    if models["yolo"] is None:
-        raise HTTPException(status_code=503, detail="YOLO model not loaded")
-    
-    try:
-        results = models["yolo"](image, conf=MIN_DETECTION_SCORE, iou=NMS_IOU_THRESHOLD)
-        detections = []
-        
-        for i, result in enumerate(results[0].boxes.data):
-            x1, y1, x2, y2, conf, cls = result.tolist()
-            class_name = models["yolo"].names[int(cls)]
-            
-            bbox = [x1, y1, x2 - x1, y2 - y1]
-            
-            detection = DetectionResult(
-                object_id=f"obj_{i}_{int(cls)}",
-                class_name=class_name,
-                score=conf,
-                bbox=bbox,
-                crop_url=None
-            )
-            detections.append(detection)
-        
-        return detections
-    except Exception as e:
-        logger.error(f"YOLO detection failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Detection failed: {e}")
+class ImageGenResponse(BaseModel):
+    image_base64: str
 
 @app.on_event("startup")
 async def startup_event():
-    """Load models on startup"""
-    logger.info("Loading ML models...")
-    load_models()
-    logger.info("ML service startup complete")
+    logger.info("✅ VERSION 25 (SCRUBBER) LOADED!")
 
-@app.get("/health", response_model=HealthResponse)
-async def health_check():
-    """Check model health status"""
-    return HealthResponse(
-        yolo=models["yolo"] is not None,
-        places365=models["places365"] is not None,
-        clip=models["clip"] is not None,
-        generator=models["generator"] is not None
-    )
+def clean_autocomplete_output(user_input: str, ai_output: str) -> str:
+    """
+    Powerful cleaning function to remove tags and repetition.
+    """
+    # 1. Regex to remove ANY text inside brackets [] or <>
+    # This catches [INST], [/INST], [ASS], <|user|>, etc.
+    clean_text = re.sub(r'\[.*?\]', '', ai_output)
+    clean_text = re.sub(r'<.*?>', '', clean_text)
+    
+    # 2. Remove generic artifacts
+    clean_text = clean_text.replace('"', '').strip()
+    
+    # 3. Check for Repetition
+    # If the AI starts by repeating the user's input, cut it off.
+    # Example: User="I am", AI="I am happy" -> Result="happy"
+    if clean_text.lower().startswith(user_input.lower()):
+        clean_text = clean_text[len(user_input):].strip()
+        
+    # 4. Fallback: If AI repeated the input but with different casing or whitespace
+    # We check if the input is inside the output
+    if user_input.lower() in clean_text.lower():
+        parts = clean_text.lower().split(user_input.lower(), 1)
+        if len(parts) > 1:
+            # Return only what comes AFTER the input
+            # We map it back to the original string to preserve casing of the new words
+            start_index = clean_text.lower().find(user_input.lower()) + len(user_input)
+            clean_text = clean_text[start_index:].strip()
 
-# --- NEW ENDPOINT FOR TEXT GENERATION ---
+    return clean_text
+
+# --- ENDPOINTS ---
+
 @app.post("/generate", response_model=TextGenerationResponse)
 async def generate_text(request: TextGenerationRequest):
-    """
-    Generate text based on the input prompt.
-    This provides the 'Autocomplete' functionality.
-    """
-    if models["generator"] is None:
-        raise HTTPException(status_code=503, detail="Generator model not loaded")
+    """AUTOCOMPLETE"""
     
+    messages = [
+        {
+            "role": "system", 
+            "content": "You are a text completion engine. Finish the user's sentence immediately. Do not repeat the input. Output ONLY the remaining words."
+        },
+        {
+            "role": "user", 
+            "content": f"{request.text}"
+        }
+    ]
+
     try:
-        # Generate text
-        # max_new_tokens limits how much it writes (to keep it fast)
-        # num_return_sequences=1 means just give me 1 suggestion
-       
-        output = models["generator"](
-            request.text, 
-            max_new_tokens=15,       # Generate 15 new words max
-            num_return_sequences=1,
-            do_sample=True,          # Enable creativity
-            temperature=0.8,         # Higher = more creative (0.7 -> 0.8)
-            repetition_penalty=1.3,  # <--- THIS IS THE FIX (Punishes repeating words)
-            truncation=True          # Ensure it handles length properly
+        response = client.chat_completion(
+            model=UNIFIED_MODEL, 
+            messages=messages, 
+            max_tokens=30,  
+            temperature=0.3 
         )
         
-        # The pipeline returns a list of dicts: [{'generated_text': '...'}]
-        generated_full_text = output[0]['generated_text']
+        raw_output = response.choices[0].message.content
         
-        # Usually, we only want the *new* part, but for now, let's return the whole thing
-        # The frontend can decide how to display it.
-        return TextGenerationResponse(generated_text=generated_full_text)
+        # Apply the Scrubber
+        final_text = clean_autocomplete_output(request.text, raw_output)
+
+        return TextGenerationResponse(generated_text=final_text)
 
     except Exception as e:
-        logger.error(f"Text generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
+        logger.error(f"Autocomplete Failed: {e}")
+        return TextGenerationResponse(generated_text="")
 
-@app.post("/detect", response_model=DetectionResponse)
-async def detect_objects(request: DetectionRequest):
-    """Run object detection on image"""
-    if not request.image_base64 and not request.image_url:
-        raise HTTPException(status_code=400, detail="Either image_base64 or image_url must be provided")
-    
-    if not request.image_base64:
-        raise HTTPException(status_code=400, detail="Only base64 images supported currently")
-    
-    image = decode_image(request.image_base64)
-    detections = run_yolo_detection(image)
-    
-    scene = {
-        "primary": "unknown",
-        "labels": [{"label": "unknown", "score": 0.0}]
-    }
-    
-    return DetectionResponse(
-        image_id=f"img_{hash(request.image_base64[:100])}",
-        objects=detections,
-        scene=scene
-    )
+@app.post("/generate-story", response_model=TextGenerationResponse)
+async def generate_story(request: StoryRequest):
+    """STORY WRITER"""
+    logger.info(f"📝 Generating story for: {request.keywords}")
 
-@app.post("/embed", response_model=EmbeddingResponse)
-async def generate_embedding(request: EmbeddingRequest):
-    """Generate image embedding"""
-    if models["clip"] is None:
-        raise HTTPException(status_code=503, detail="CLIP model not loaded")
-    
+    messages = [
+        {
+            "role": "system", 
+            "content": "You are a personal diary assistant. Write a happy, descriptive diary entry based on the user's keywords. Do NOT use headers. Just write the paragraph."
+        },
+        {
+            "role": "user", 
+            "content": f"Write a diary entry using these exact keywords: {request.keywords}"
+        }
+    ]
+
     try:
-        import clip
-        import torch
-        from PIL import Image
-        
-        image = decode_image(request.image_base64)
-        image_pil = Image.fromarray(image)
-        
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        preprocess = clip.load("ViT-B/32", device=device)[1]
-        image_input = preprocess(image_pil).unsqueeze(0).to(device)
-        
-        with torch.no_grad():
-            image_features = models["clip"].encode_image(image_input)
-            embedding = image_features.cpu().numpy().flatten().tolist()
-        
-        return EmbeddingResponse(
-            embedding=embedding,
-            dims=len(embedding)
+        response = client.chat_completion(
+            model=UNIFIED_MODEL, 
+            messages=messages, 
+            max_tokens=300,
+            temperature=0.85
         )
-    except Exception as e:
-        logger.error(f"Embedding generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Embedding generation failed: {e}")
+        # We also lightly clean the story just in case
+        story = response.choices[0].message.content
+        story = re.sub(r'\[.*?\]', '', story) # Remove accidental tags
+        return TextGenerationResponse(generated_text=story)
 
-@app.post("/embed-text", response_model=EmbeddingResponse)
-async def generate_text_embedding(request: dict):
-    """Generate text embedding using CLIP"""
-    if models["clip"] is None:
-        raise HTTPException(status_code=503, detail="CLIP model not loaded")
-    
+    except Exception as e:
+        logger.error(f"❌ STORY API FAILED: {e}")
+        return TextGenerationResponse(generated_text=f"AI Error: {str(e)}")
+
+@app.post("/generate-image", response_model=ImageGenResponse)
+async def generate_image(request: ImageGenRequest):
+    """IMAGE GEN"""
+    logger.info(f"🎨 Generating image: {request.prompt}")
     try:
-        import clip
-        import torch
-        
-        text = request.get("text", "")
-        if not text:
-            raise HTTPException(status_code=400, detail="Text is required")
-        
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        text_tokens = clip.tokenize([text]).to(device)
-        
-        with torch.no_grad():
-            text_features = models["clip"].encode_text(text_tokens)
-            embedding = text_features.cpu().numpy().flatten().tolist()
-        
-        return EmbeddingResponse(
-            embedding=embedding,
-            dims=len(embedding)
+        image_bytes = client.text_to_image(
+            model=IMAGE_MODEL_ID,
+            prompt=request.prompt
         )
+        buffered = io.BytesIO()
+        image_bytes.save(buffered, format="JPEG")
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return ImageGenResponse(image_base64=f"data:image/jpeg;base64,{img_str}")
+        
     except Exception as e:
-        logger.error(f"Text embedding generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Text embedding generation failed: {e}")
-
-@app.post("/scene", response_model=Dict[str, Any])
-async def classify_scene(request: DetectionRequest):
-    if models["places365"] is None:
-        raise HTTPException(status_code=503, detail="Places365 model not loaded")
-    
-    return {
-        "primary": "outdoor",
-        "labels": [
-            {"label": "outdoor", "score": 0.8},
-            {"label": "natural", "score": 0.6}
-        ]
-    }
+        logger.error(f"Image API Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
